@@ -22,11 +22,13 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "prepublishOnly": "pnpm build",
-    "postinstall": "node -e \"try { require('fs').accessSync('dist/index.js'); } catch(e) { const {execSync} = require('child_process'); try { execSync('npx nest build', {stdio: 'inherit'}); } catch(err) { console.warn('Build failed, but source files are available'); } }\""
+    "postinstall": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.js')){const {execSync}=require('child_process');try{execSync('npx nest build',{stdio:'inherit'});}catch(e){console.error('Build failed:',e.message);process.exit(1);}}\""
   },
   "dependencies": {
     "nest-winston": "^1.10.2",
-    "winston": "^3.18.3"
+    "winston": "^3.18.3",
+    "@nestjs/cli": "^11.0.0",
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
     "@nestjs/common": "^10.0.0 || ^11.0.0",
@@ -37,7 +39,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",
-    "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
     "@types/express": "^5.0.0",
@@ -56,7 +57,6 @@
     "ts-loader": "^9.5.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.7.3",
     "typescript-eslint": "^8.20.0"
   },
   "jest": {
