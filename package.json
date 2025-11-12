@@ -10,7 +10,10 @@
   "files": [
     "src",
     "index.ts",
+    "scripts",
     "tsconfig.json",
+    "tsconfig.build.json",
+    "nest-cli.json",
     "package.json",
     "README.md"
   ],
@@ -22,7 +25,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "prepublishOnly": "pnpm build",
-    "postinstall": "node -e \"const fs=require('fs');if(!fs.existsSync('dist/index.js')){const {execSync}=require('child_process');try{execSync('npx nest build',{stdio:'inherit'});}catch(e){console.error('Build failed:',e.message);process.exit(1);}}\""
+    "postinstall": "node scripts/postinstall.js"
   },
   "dependencies": {
     "nest-winston": "^1.10.2",
