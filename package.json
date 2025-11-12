@@ -8,7 +8,12 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "src",
+    "index.ts",
+    "dist",
+    "tsconfig.json",
+    "package.json",
+    "README.md"
   ],
   "scripts": {
     "build": "nest build",
@@ -17,7 +22,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "postinstall": "node -e \"try { require('fs').accessSync('dist/index.js'); } catch(e) { const {execSync} = require('child_process'); try { execSync('npx nest build', {stdio: 'inherit'}); } catch(err) { console.warn('Build failed, but source files are available'); } }\""
   },
   "dependencies": {
     "nest-winston": "^1.10.2",
