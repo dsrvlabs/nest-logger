@@ -1,7 +1,7 @@
 # compiled output
-/dist
 /node_modules
 /build
+# /dist - 빌드된 파일을 GitHub에 포함하여 postinstall 없이 사용 가능하도록 함
 
 # Logs
 logs
@@ -13,7 +13,7 @@ yarn-error.log*
 lerna-debug.log*
 
 # OS
-.DS_Store
+.DS_Stor
 
 # Tests
 /coverage

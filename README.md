@@ -180,6 +180,34 @@ import * as winston from 'winston';
 export class AppModule {}
 ```
 
+## Development
+
+프로젝트를 수정한 후 GitHub에 푸시하기 전에 반드시 빌드를 실행해야 합니다:
+
+```bash
+# 빌드 실행
+pnpm build
+
+# 또는 prepush 스크립트 사용 (빌드 + git add dist/)
+pnpm run prepush
+
+# 커밋 및 푸시
+git commit -m "Your changes"
+git push
+```
+
+**중요:** 소스 코드(`src/`)를 수정한 경우 반드시 빌드 후 푸시해야 합니다. 그렇지 않으면 다른 프로젝트에서 오래된 빌드 파일을 사용하게 됩니다.
+
+### Git Hook 사용 (선택사항)
+
+자동으로 빌드하려면 `.git/hooks/pre-push` hook을 설정할 수 있습니다:
+
+```bash
+chmod +x .git/hooks/pre-push
+```
+
+이렇게 하면 `git push` 시 자동으로 빌드가 실행됩니다.
+
 ## License
 
 MIT
