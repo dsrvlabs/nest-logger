@@ -17,26 +17,24 @@ const common_1 = require("@nestjs/common");
 const nest_winston_1 = require("nest-winston");
 const winston_1 = require("winston");
 let LoggerService = class LoggerService {
-    winston;
     winstonLogger;
-    constructor(winston, winstonLogger) {
-        this.winston = winston;
+    constructor(winstonLogger) {
         this.winstonLogger = winstonLogger;
     }
     log(message, context) {
-        this.winston.log(message, context);
+        this.winstonLogger.info(message, { context });
     }
     error(message, trace, context) {
-        this.winston.error(message, trace, context);
+        this.winstonLogger.error(message, { context, trace });
     }
     warn(message, context) {
-        this.winston.warn(message, context);
+        this.winstonLogger.warn(message, { context });
     }
     debug(message, context) {
-        this.winston.debug?.(message, context);
+        this.winstonLogger.debug(message, { context });
     }
     verbose(message, context) {
-        this.winston.verbose?.(message, context);
+        this.winstonLogger.verbose(message, { context });
     }
     getWinstonLogger() {
         return this.winstonLogger;
@@ -45,8 +43,7 @@ let LoggerService = class LoggerService {
 exports.LoggerService = LoggerService;
 exports.LoggerService = LoggerService = __decorate([
     (0, common_1.Injectable)(),
-    __param(1, (0, common_1.Inject)(nest_winston_1.WINSTON_MODULE_PROVIDER)),
-    __metadata("design:paramtypes", [nest_winston_1.WinstonLogger,
-        winston_1.Logger])
+    __param(0, (0, common_1.Inject)(nest_winston_1.WINSTON_MODULE_PROVIDER)),
+    __metadata("design:paramtypes", [winston_1.Logger])
 ], LoggerService);
 //# sourceMappingURL=logger.service.js.map

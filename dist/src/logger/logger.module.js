@@ -51,19 +51,18 @@ let LoggerModule = LoggerModule_1 = class LoggerModule {
             module: LoggerModule_1,
             imports: [
                 nest_winston_1.WinstonModule.forRoot({
-                    transports: options?.transports ||
-                        [
-                            new winston.transports.Console({
-                                format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.colorize(), winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
-                                    const contextStr = context ? `[${context}]` : '';
-                                    const metaStr = Object.keys(meta).length
-                                        ? ` ${JSON.stringify(meta)}`
-                                        : '';
-                                    const logLine = `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
-                                    return context === 'HttpLogger' ? logLine : `${logLine}\n`;
-                                })),
-                            }),
-                        ],
+                    transports: options?.transports || [
+                        new winston.transports.Console({
+                            format: winston.format.combine(winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), winston.format.colorize(), winston.format.printf(({ timestamp, level, message, context, ...meta }) => {
+                                const contextStr = context ? `[${context}]` : '';
+                                const metaStr = Object.keys(meta).length
+                                    ? ` ${JSON.stringify(meta)}`
+                                    : '';
+                                const logLine = `${timestamp} ${level} ${contextStr} ${message}${metaStr}`;
+                                return context === 'HttpLogger' ? logLine : `${logLine}\n`;
+                            })),
+                        }),
+                    ],
                 }),
             ],
             providers: [logger_service_1.LoggerService],

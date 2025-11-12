@@ -60,9 +60,7 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
                 : undefined;
             const errorMessage = error instanceof Error
                 ? error.message
-                : typeof error === 'object' &&
-                    error !== null &&
-                    'message' in error
+                : typeof error === 'object' && error !== null && 'message' in error
                     ? String(error.message)
                     : 'Unknown error';
             const errorStack = error instanceof Error

@@ -1,10 +1,8 @@
 import { LoggerService as NestLoggerService } from '@nestjs/common';
-import { WinstonLogger } from 'nest-winston';
 import { Logger } from 'winston';
 export declare class LoggerService implements NestLoggerService {
-    private readonly winston;
     private readonly winstonLogger;
-    constructor(winston: WinstonLogger, winstonLogger: Logger);
+    constructor(winstonLogger: Logger);
     log(message: string, context?: string): void;
     error(message: string, trace?: string, context?: string): void;
     warn(message: string, context?: string): void;
