@@ -18,38 +18,73 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
         this.logger = logger;
     }
     use(req, res, next) {
-        const { method, originalUrl, ip, headers } = req;
-        const userAgent = headers['user-agent'] || '';
+        const { method, originalUrl } = req;
         const startTime = Date.now();
-        const requestLog = {
-            type: 'REQUEST',
+        const requestBody = this.sanitizeBody(req.body);
+        const requestQuery = Object.keys(req.query).length > 0 ? req.query : undefined;
+        const requestParams = Object.keys(req.params).length > 0 ? req.params : undefined;
+        this.logger.getWinstonLogger().info('REQ', {
+            context: 'HttpLogger',
             method,
             url: originalUrl,
-            ip,
-            userAgent,
-            body: this.sanitizeBody(req.body),
-            query: req.query,
-            params: req.params,
-        };
-        this.logger.getWinstonLogger().info('HTTP Request', {
-            context: 'HttpLogger',
-            ...requestLog,
+            body: requestBody,
+            query: requestQuery,
+            params: requestParams,
         });
+        const chunks = [];
+        const originalWrite = res.write.bind(res);
+        const originalEnd = res.end.bind(res);
+        res.write = function (chunk, ...args) {
+            if (chunk) {
+                if (Buffer.isBuffer(chunk)) {
+                    chunks.push(chunk);
+                }
+                else if (typeof chunk === 'string') {
+                    chunks.push(Buffer.from(chunk));
+                }
+            }
+            return originalWrite(chunk, ...args);
+        };
+        res.end = function (chunk, ...args) {
+            if (chunk) {
+                if (Buffer.isBuffer(chunk)) {
+                    chunks.push(chunk);
+                }
+                else if (typeof chunk === 'string') {
+                    chunks.push(Buffer.from(chunk));
+                }
+            }
+            return originalEnd(chunk, ...args);
+        };
         res.on('finish', () => {
             const endTime = Date.now();
             const responseTime = ((endTime - startTime) / 1000).toFixed(3);
-            const responseLog = {
-                type: 'RESPONSE',
+            let responseBody = undefined;
+            try {
+                if (chunks.length > 0) {
+                    const bodyString = Buffer.concat(chunks).toString('utf8');
+                    if (bodyString) {
+                        try {
+                            responseBody = JSON.parse(bodyString);
+                        }
+                        catch {
+                            responseBody =
+                                bodyString.length > 500
+                                    ? bodyString.substring(0, 500) + '...'
+                                    : bodyString;
+                        }
+                    }
+                }
+            }
+            catch {
+            }
+            this.logger.getWinstonLogger().info('RES', {
+                context: 'HttpLogger',
                 method,
                 url: originalUrl,
                 statusCode: res.statusCode,
                 responseTime: `${responseTime}s`,
-                ip,
-                userAgent,
-            };
-            this.logger.getWinstonLogger().info('HTTP Response', {
-                context: 'HttpLogger',
-                ...responseLog,
+                body: responseBody,
             });
         });
         res.on('error', (error) => {
@@ -63,30 +98,13 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
                 : typeof error === 'object' && error !== null && 'message' in error
                     ? String(error.message)
                     : 'Unknown error';
-            const errorStack = error instanceof Error
-                ? error.stack || ''
-                : typeof error === 'object' && error !== null && 'stack' in error
-                    ? (() => {
-                        const stack = error.stack;
-                        return typeof stack === 'string' ? stack : '';
-                    })()
-                    : '';
-            const errorLog = {
-                type: 'RESPONSE',
+            this.logger.getWinstonLogger().error('RES', {
+                context: 'HttpLogger',
                 method,
                 url: originalUrl,
                 statusCode: errorStatus || 500,
                 responseTime: `${responseTime}s`,
-                ip,
-                userAgent,
-                error: {
-                    message: errorMessage,
-                    stack: errorStack,
-                },
-            };
-            this.logger.getWinstonLogger().error('HTTP Error Response', {
-                context: 'HttpLogger',
-                ...errorLog,
+                error: errorMessage,
             });
         });
         next();

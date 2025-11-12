@@ -7,55 +7,92 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   constructor(private readonly logger: LoggerService) {}
 
   use(req: Request, res: Response, next: NextFunction) {
-    const { method, originalUrl, ip, headers } = req;
-    const userAgent = headers['user-agent'] || '';
+    const { method, originalUrl } = req;
     const startTime = Date.now();
 
     // Request 로그
-    const requestLog: {
-      type: string;
-      method: string | undefined;
-      url: string;
-      ip: string | undefined;
-      userAgent: string;
-      body: unknown;
-      query: unknown;
-      params: unknown;
-    } = {
-      type: 'REQUEST',
+    const requestBody = this.sanitizeBody(req.body);
+    const requestQuery =
+      Object.keys(req.query).length > 0 ? req.query : undefined;
+    const requestParams =
+      Object.keys(req.params).length > 0 ? req.params : undefined;
+
+    this.logger.getWinstonLogger().info('REQ', {
+      context: 'HttpLogger',
       method,
       url: originalUrl,
-      ip,
-      userAgent,
-      body: this.sanitizeBody(req.body),
-      query: req.query,
-      params: req.params,
+      body: requestBody,
+      query: requestQuery,
+      params: requestParams,
+    });
+
+    // Response body 캡처를 위한 변수
+    const chunks: Buffer[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const originalWrite = res.write.bind(res);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const originalEnd = res.end.bind(res);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    res.write = function (chunk: any, ...args: any[]) {
+      if (chunk) {
+        if (Buffer.isBuffer(chunk)) {
+          chunks.push(chunk);
+        } else if (typeof chunk === 'string') {
+          chunks.push(Buffer.from(chunk));
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+      return originalWrite(chunk, ...args);
     };
 
-    this.logger.getWinstonLogger().info('HTTP Request', {
-      context: 'HttpLogger',
-      ...requestLog,
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    res.end = function (chunk: any, ...args: any[]) {
+      if (chunk) {
+        if (Buffer.isBuffer(chunk)) {
+          chunks.push(chunk);
+        } else if (typeof chunk === 'string') {
+          chunks.push(Buffer.from(chunk));
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+      return originalEnd(chunk, ...args);
+    };
 
     // Response 완료 시 로그
     res.on('finish', () => {
       const endTime = Date.now();
       const responseTime = ((endTime - startTime) / 1000).toFixed(3); // sec 단위
 
+      // Response body 파싱 시도
+      let responseBody: unknown = undefined;
+      try {
+        if (chunks.length > 0) {
+          const bodyString = Buffer.concat(chunks).toString('utf8');
+          if (bodyString) {
+            try {
+              responseBody = JSON.parse(bodyString);
+            } catch {
+              // JSON이 아니면 문자열로 저장 (너무 길면 잘라냄)
+              responseBody =
+                bodyString.length > 500
+                  ? bodyString.substring(0, 500) + '...'
+                  : bodyString;
+            }
+          }
+        }
+      } catch {
+        // 파싱 실패 시 무시
+      }
+
       // Response 로그
-      const responseLog = {
-        type: 'RESPONSE',
+      this.logger.getWinstonLogger().info('RES', {
+        context: 'HttpLogger',
         method,
         url: originalUrl,
         statusCode: res.statusCode,
         responseTime: `${responseTime}s`,
-        ip,
-        userAgent,
-      };
-
-      this.logger.getWinstonLogger().info('HTTP Response', {
-        context: 'HttpLogger',
-        ...responseLog,
+        body: responseBody,
       });
     });
 
@@ -76,46 +113,14 @@ export class HttpLoggerMiddleware implements NestMiddleware {
             ? String((error as { message?: unknown }).message)
             : 'Unknown error';
 
-      const errorStack =
-        error instanceof Error
-          ? error.stack || ''
-          : typeof error === 'object' && error !== null && 'stack' in error
-            ? (() => {
-                const stack = (error as { stack?: unknown }).stack;
-                return typeof stack === 'string' ? stack : '';
-              })()
-            : '';
-
       // Error Response 로그
-      const errorLog: {
-        type: string;
-        method: string | undefined;
-        url: string;
-        statusCode: number;
-        responseTime: string;
-        ip: string | undefined;
-        userAgent: string;
-        error: {
-          message: string;
-          stack: string;
-        };
-      } = {
-        type: 'RESPONSE',
+      this.logger.getWinstonLogger().error('RES', {
+        context: 'HttpLogger',
         method,
         url: originalUrl,
         statusCode: errorStatus || 500,
         responseTime: `${responseTime}s`,
-        ip,
-        userAgent,
-        error: {
-          message: errorMessage,
-          stack: errorStack,
-        },
-      };
-
-      this.logger.getWinstonLogger().error('HTTP Error Response', {
-        context: 'HttpLogger',
-        ...errorLog,
+        error: errorMessage,
       });
     });
 

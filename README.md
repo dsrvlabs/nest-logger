@@ -5,19 +5,23 @@ NestJS Winston Logger Module with HTTP Request/Response Logging
 ## Features
 
 - 🎯 Winston 기반 로깅 모듈
-- 📝 HTTP 요청/응답 자동 로깅
+- 📝 HTTP 요청/응답 간결한 로깅 (method, url, statusCode, responseTime)
 - ⏱️ 응답 시간 측정 (초 단위)
-- 🔒 민감한 정보 자동 마스킹 (password, token, secret, authorization)
 
 ## Installation
 
 ```bash
-npm install nest-logger
-# or
-pnpm add nest-logger
-# or
-yarn add nest-logger
+# pnpm
+pnpm add git+https://github.com/dsrvlabs/nest-logger.git
+
+# npm
+npm install git+https://github.com/dsrvlabs/nest-logger.git
+
+# yarn
+yarn add git+https://github.com/dsrvlabs/nest-logger.git
 ```
+
+**참고:** 빌드된 파일이 포함되어 있어 `pnpm approve-builds` 없이 바로 사용할 수 있습니다.
 
 ## Usage
 
@@ -146,16 +150,16 @@ export class YourService {
 
 HTTP 요청/응답 로그는 줄바꿈 없이 한 줄로 출력됩니다.
 
-### Request Log
+### Request Log (REQ)
 
 ```
-2024-01-01 12:00:00 info [HttpLogger] HTTP Request {"type":"REQUEST","method":"GET","url":"/api/users","ip":"127.0.0.1","userAgent":"Mozilla/5.0...","body":{},"query":{},"params":{}}
+2024-01-01 12:00:00 info [HttpLogger] REQ {"method":"GET","url":"/api/users","body":{"name":"test"},"query":{"page":"1"},"params":{"id":"123"}}
 ```
 
-### Response Log
+### Response Log (RES)
 
 ```
-2024-01-01 12:00:00 info [HttpLogger] HTTP Response {"type":"RESPONSE","method":"GET","url":"/api/users","statusCode":200,"responseTime":"0.123s","ip":"127.0.0.1","userAgent":"Mozilla/5.0..."}
+2024-01-01 12:00:00 info [HttpLogger] RES {"method":"GET","url":"/api/users","statusCode":200,"responseTime":"0.123s","body":{"data":"result"}}
 ```
 
 ## Custom Configuration
