@@ -33,7 +33,6 @@ export class HttpLoggerMiddleware implements NestMiddleware {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const originalEnd = res.end.bind(res);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     res.write = function (chunk: any, ...args: any[]) {
       if (chunk) {
         if (Buffer.isBuffer(chunk)) {
@@ -42,11 +41,10 @@ export class HttpLoggerMiddleware implements NestMiddleware {
           chunks.push(Buffer.from(chunk));
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return originalWrite(chunk, ...args);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     res.end = function (chunk: any, ...args: any[]) {
       if (chunk) {
         if (Buffer.isBuffer(chunk)) {
@@ -55,7 +53,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
           chunks.push(Buffer.from(chunk));
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return originalEnd(chunk, ...args);
     };
 

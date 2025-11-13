@@ -81,11 +81,38 @@ export class YourService {
   constructor(private readonly logger: LoggerService) {}
 
   someMethod() {
-    this.logger.log('Info message', 'YourService');
-    this.logger.error('Error message', 'stack trace', 'YourService');
-    this.logger.warn('Warning message', 'YourService');
-    this.logger.debug('Debug message', 'YourService');
-    this.logger.verbose('Verbose message', 'YourService');
+    // context에 함수 이름을 명시적으로 전달
+    this.logger.log(
+      'Info message',
+      `${this.constructor.name}.${this.someMethod.name}`,
+    );
+    this.logger.error(
+      'Error message',
+      'stack trace',
+      `${this.constructor.name}.${this.someMethod.name}`,
+    );
+    this.logger.warn(
+      'Warning message',
+      `${this.constructor.name}.${this.someMethod.name}`,
+    );
+    this.logger.debug(
+      'Debug message',
+      `${this.constructor.name}.${this.someMethod.name}`,
+    );
+    this.logger.verbose(
+      'Verbose message',
+      `${this.constructor.name}.${this.someMethod.name}`,
+    );
+  }
+
+  // 또는 클래스 이름만 사용
+  anotherMethod() {
+    this.logger.log('Info message', this.constructor.name);
+  }
+
+  // 또는 함수 이름만 사용
+  thirdMethod() {
+    this.logger.log('Info message', this.thirdMethod.name);
   }
 }
 ```
