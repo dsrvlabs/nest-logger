@@ -3,6 +3,10 @@
 /build
 # /dist - 빌드된 파일을 GitHub에 포함하여 postinstall 없이 사용 가능하도록 함
 
+# TypeScript build cache
+*.tsbuildinfo
+dist/**/*.tsbuildinfo
+
 # Logs
 logs
 *.log
@@ -13,7 +17,7 @@ yarn-error.log*
 lerna-debug.log*
 
 # OS
-.DS_Stor
+.DS_Store
 
 # Tests
 /coverage
