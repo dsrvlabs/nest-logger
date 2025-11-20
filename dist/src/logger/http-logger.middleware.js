@@ -20,17 +20,22 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
     use(req, res, next) {
         const { method, originalUrl } = req;
         const startTime = Date.now();
+        const requestId = req.headers['x-request-id'];
         const requestBody = this.sanitizeBody(req.body);
         const requestQuery = Object.keys(req.query).length > 0 ? req.query : undefined;
         const requestParams = Object.keys(req.params).length > 0 ? req.params : undefined;
-        this.logger.getWinstonLogger().info('REQ', {
+        const requestLogData = {
             context: 'HttpLogger',
             method,
             url: originalUrl,
             body: requestBody,
             query: requestQuery,
             params: requestParams,
-        });
+        };
+        if (requestId) {
+            requestLogData.requestId = requestId;
+        }
+        this.logger.getWinstonLogger().info('REQ', requestLogData);
         const chunks = [];
         const originalWrite = res.write.bind(res);
         const originalEnd = res.end.bind(res);
@@ -78,14 +83,18 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
             }
             catch {
             }
-            this.logger.getWinstonLogger().info('RES', {
+            const responseLogData = {
                 context: 'HttpLogger',
                 method,
                 url: originalUrl,
                 statusCode: res.statusCode,
                 responseTime: `${responseTime}s`,
                 body: responseBody,
-            });
+            };
+            if (requestId) {
+                responseLogData.requestId = requestId;
+            }
+            this.logger.getWinstonLogger().info('RES', responseLogData);
         });
         res.on('error', (error) => {
             const endTime = Date.now();
@@ -98,14 +107,18 @@ let HttpLoggerMiddleware = class HttpLoggerMiddleware {
                 : typeof error === 'object' && error !== null && 'message' in error
                     ? String(error.message)
                     : 'Unknown error';
-            this.logger.getWinstonLogger().error('RES', {
+            const errorLogData = {
                 context: 'HttpLogger',
                 method,
                 url: originalUrl,
                 statusCode: errorStatus || 500,
                 responseTime: `${responseTime}s`,
                 error: errorMessage,
-            });
+            };
+            if (requestId) {
+                errorLogData.requestId = requestId;
+            }
+            this.logger.getWinstonLogger().error('RES', errorLogData);
         });
         next();
     }

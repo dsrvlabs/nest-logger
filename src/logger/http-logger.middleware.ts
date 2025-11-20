@@ -9,6 +9,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction) {
     const { method, originalUrl } = req;
     const startTime = Date.now();
+    const requestId = req.headers['x-request-id'] as string | undefined;
 
     // Request 로그
     const requestBody = this.sanitizeBody(req.body);
@@ -17,14 +18,20 @@ export class HttpLoggerMiddleware implements NestMiddleware {
     const requestParams =
       Object.keys(req.params).length > 0 ? req.params : undefined;
 
-    this.logger.getWinstonLogger().info('REQ', {
+    const requestLogData: Record<string, unknown> = {
       context: 'HttpLogger',
       method,
       url: originalUrl,
       body: requestBody,
       query: requestQuery,
       params: requestParams,
-    });
+    };
+
+    if (requestId) {
+      requestLogData.requestId = requestId;
+    }
+
+    this.logger.getWinstonLogger().info('REQ', requestLogData);
 
     // Response body 캡처를 위한 변수
     const chunks: Buffer[] = [];
@@ -84,14 +91,20 @@ export class HttpLoggerMiddleware implements NestMiddleware {
       }
 
       // Response 로그
-      this.logger.getWinstonLogger().info('RES', {
+      const responseLogData: Record<string, unknown> = {
         context: 'HttpLogger',
         method,
         url: originalUrl,
         statusCode: res.statusCode,
         responseTime: `${responseTime}s`,
         body: responseBody,
-      });
+      };
+
+      if (requestId) {
+        responseLogData.requestId = requestId;
+      }
+
+      this.logger.getWinstonLogger().info('RES', responseLogData);
     });
 
     // Error 발생 시 로그
@@ -112,14 +125,20 @@ export class HttpLoggerMiddleware implements NestMiddleware {
             : 'Unknown error';
 
       // Error Response 로그
-      this.logger.getWinstonLogger().error('RES', {
+      const errorLogData: Record<string, unknown> = {
         context: 'HttpLogger',
         method,
         url: originalUrl,
         statusCode: errorStatus || 500,
         responseTime: `${responseTime}s`,
         error: errorMessage,
-      });
+      };
+
+      if (requestId) {
+        errorLogData.requestId = requestId;
+      }
+
+      this.logger.getWinstonLogger().error('RES', errorLogData);
     });
 
     next();
